@@ -2,11 +2,14 @@
 'use strict';
 
 /*
- * Basic CLI calculator supporting the four arithmetic operations:
+ * Calculator supporting the core arithmetic operations:
  * - addition (+)
  * - subtraction (-)
  * - multiplication (*)
  * - division (/)
+ * - modulo (%)
+ * - exponentiation (power, ^)
+ * - square root (sqrt)
  */
 
 const readline = require('node:readline/promises');
@@ -45,10 +48,42 @@ function divide(a, b) {
   return left / right;
 }
 
+function modulo(a, b) {
+  const left = ensureNumber(a, 'First operand');
+  const right = ensureNumber(b, 'Second operand');
+
+  if (right === 0) {
+    throw new Error('Modulo by zero is not allowed.');
+  }
+
+  return left % right;
+}
+
+function power(base, exponent) {
+  const left = ensureNumber(base, 'Base');
+  const right = ensureNumber(exponent, 'Exponent');
+  return left ** right;
+}
+
+function squareRoot(n) {
+  const value = ensureNumber(n, 'Number');
+
+  if (value < 0) {
+    throw new Error('Square root of a negative number is not defined.');
+  }
+
+  return Math.sqrt(value);
+}
+
 function calculate(firstOperand, operator, secondOperand) {
   const left = ensureNumber(firstOperand, 'First operand');
-  const right = ensureNumber(secondOperand, 'Second operand');
   const symbol = String(operator || '').trim().toLowerCase();
+
+  if (['sqrt', 'square-root', 'squareroot', 'square root'].includes(symbol)) {
+    return squareRoot(left);
+  }
+
+  const right = ensureNumber(secondOperand, 'Second operand');
 
   switch (symbol) {
     case '+':
@@ -71,9 +106,21 @@ function calculate(firstOperand, operator, secondOperand) {
         throw new Error('Division by zero is not allowed.');
       }
       return left / right;
+    case '%':
+    case 'mod':
+    case 'modulo':
+      if (right === 0) {
+        throw new Error('Modulo by zero is not allowed.');
+      }
+      return left % right;
+    case '**':
+    case '^':
+    case 'power':
+    case 'exponent':
+      return left ** right;
     default:
       throw new Error(
-        `Unsupported operation: "${operator}". Supported operations are +, -, *, /, add, subtract, multiply, and divide.`
+        `Unsupported operation: "${operator}". Supported operations are +, -, *, /, %, ^, sqrt, add, subtract, multiply, divide, modulo, power, and square root.`
       );
   }
 }
@@ -83,10 +130,10 @@ async function promptForCalculation() {
 
   try {
     const firstOperand = await rl.question('Enter the first number: ');
-    const operator = await rl.question('Enter the operation (+, -, *, /): ');
-    const secondOperand = await rl.question('Enter the second number: ');
+    const operator = await rl.question('Enter the operation (+, -, *, /, %, ^, sqrt): ');
+    const secondOperand = await rl.question('Enter the second number (leave blank for single-operand operations like sqrt): ');
 
-    const result = calculate(firstOperand, operator, secondOperand);
+    const result = calculate(firstOperand, operator, secondOperand || undefined);
     console.log(`Result: ${result}`);
   } catch (error) {
     console.error(`Error: ${error.message}`);
@@ -104,15 +151,20 @@ async function runCli() {
     return;
   }
 
-  if (process.argv.length < 5) {
-    console.log('Usage: node src/calculator.js <number> <operator> <number>');
-    console.log('Example: node src/calculator.js 10 + 5');
+  const symbol = String(rawOperator || '').trim().toLowerCase();
+  const isSingleOperandOperation = ['sqrt', 'square-root', 'squareroot', 'square root'].includes(symbol);
+
+  if (process.argv.length < 4 || (process.argv.length < 5 && !isSingleOperandOperation)) {
+    console.log('Usage: node src/calculator.js <number> <operator> [number]');
+    console.log('Examples:');
+    console.log('  node src/calculator.js 10 + 5');
+    console.log('  node src/calculator.js 81 sqrt');
     process.exitCode = 1;
     return;
   }
 
   try {
-    const result = calculate(firstOperand, rawOperator, secondOperand);
+    const result = calculate(firstOperand, rawOperator, isSingleOperandOperation ? undefined : secondOperand);
     console.log(`Result: ${result}`);
   } catch (error) {
     console.error(`Error: ${error.message}`);
@@ -129,5 +181,8 @@ module.exports = {
   subtract,
   multiply,
   divide,
+  modulo,
+  power,
+  squareRoot,
   calculate,
 };

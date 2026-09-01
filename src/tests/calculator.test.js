@@ -43,11 +43,19 @@ test('calculate supports the operations shown in the sample image', () => {
   assert.equal(calculate(20, '/', 5), 4);
 });
 
-test('calculate supports word-based operators and rejects unsupported ones', () => {
+test('calculate supports the extended operations and rejects invalid input', () => {
   assert.equal(calculate(8, 'add', 2), 10);
   assert.equal(calculate(8, 'subtract', 2), 6);
   assert.equal(calculate(8, 'multiply', 2), 16);
   assert.equal(calculate(8, 'divide', 2), 4);
-  assert.throws(() => calculate(5, '%', 2), /Unsupported operation/);
+  assert.equal(calculate(10, '%', 3), 1);
+  assert.equal(calculate(2, '^', 5), 32);
+  assert.equal(calculate(81, 'sqrt'), 9);
+  assert.equal(calculate(5, 'modulo', 2), 1);
+  assert.equal(calculate(2, 'power', 3), 8);
+  assert.equal(calculate(16, 'square root'), 4);
   assert.throws(() => calculate(5, '/', 0), /Division by zero is not allowed\./);
+  assert.throws(() => calculate(5, '%', 0), /Modulo by zero is not allowed\./);
+  assert.throws(() => calculate(-4, 'sqrt'), /Square root of a negative number is not defined\./);
+  assert.throws(() => calculate(5, '$', 2), /Unsupported operation/);
 });
